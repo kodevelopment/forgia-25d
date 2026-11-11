@@ -10,12 +10,46 @@ const MINERALI = [
 const SAVE_KEY = "forgia_25d_save_v1";
 let datiUtente = JSON.parse(localStorage.getItem(SAVE_KEY)) || {
   nome: "",
+  livello: 1,
+  xp: 0,
   inventario: {},
   monete: 0,
   livelloPiccone: 0,
   armaEquipaggiata: { nome: "Spada di Legno", danno: 8, qualita: "Base", hex: "#a1887f" },
   armaturaEquipaggiata: { nome: "Tunica Base", difesa: 0, hpBonus: 0, qualita: "Base", hex: "#1976d2" }
 };
+
+// Assicura che anche i vecchi salvataggi abbiano livello e xp
+if (!datiUtente.livello) datiUtente.livello = 1;
+if (typeof datiUtente.xp !== 'number') datiUtente.xp = 0;
+
+function getXpNecessaria(livello) {
+  return livello * 120;
+}
+
+function aggiungiXP(quantita) {
+  datiUtente.xp = (datiUtente.xp || 0) + quantita;
+  let salito = false;
+
+  while (datiUtente.xp >= getXpNecessaria(datiUtente.livello)) {
+    datiUtente.xp -= getXpNecessaria(datiUtente.livello);
+    datiUtente.livello++;
+    salito = true;
+  }
+
+  if (salito) {
+    if (typeof SFX !== 'undefined' && SFX.forgia) SFX.forgia();
+    const t = document.getElementById('toast');
+    if (t) {
+      t.innerText = `🎉 LEVEL UP! Ora sei Livello ${datiUtente.livello}! (+2 ATK)`;
+      t.style.border = "2px solid #29b6f6";
+      t.style.color = "#81d4fa";
+      t.style.opacity = 1;
+      setTimeout(() => t.style.opacity = 0, 3000);
+    }
+  }
+  salvaPartita();
+}
 
 function salvaPartita() {
   localStorage.setItem(SAVE_KEY, JSON.stringify(datiUtente));
@@ -26,6 +60,15 @@ function aggiornaHUDCompleto() {
   document.getElementById('nome-zaino').innerText = datiUtente.nome || "Fabbro";
   const moneteEl = document.getElementById('hud-monete');
   if (moneteEl) moneteEl.innerText = datiUtente.monete || 0;
+
+  // Aggiorna barra e testo XP
+  const lv = datiUtente.livello || 1;
+  const xpAtt = datiUtente.xp || 0;
+  const xpMax = getXpNecessaria(lv);
+  const xpTestoEl = document.getElementById('xp-testo');
+  const xpBarraEl = document.getElementById('xp-barra');
+  if (xpTestoEl) xpTestoEl.innerText = `LV.${lv} (${xpAtt}/${xpMax} XP)`;
+  if (xpBarraEl) xpBarraEl.style.width = Math.min(100, (xpAtt / xpMax) * 100) + '%';
 
   const armaEl = document.getElementById('hud-arma');
   if (armaEl && datiUtente.armaEquipaggiata) {
