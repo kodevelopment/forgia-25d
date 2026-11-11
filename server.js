@@ -9,19 +9,26 @@ const mime = {
   '.css': 'text/css',
   '.png': 'image/png',
   '.jpg': 'image/jpeg',
+  '.jpeg': 'image/jpeg',
+  '.gif': 'image/gif',
+  '.svg': 'image/svg+xml',
+  '.json': 'application/json',
   '.mp3': 'audio/mpeg',
-  '.wav': 'audio/wav'
+  '.wav': 'audio/wav',
+  '.ogg': 'audio/ogg'
 };
 
 const server = http.createServer((req, res) => {
-  const cleanUrl = req.url.split('?')[0];
-  let file = '.' + (cleanUrl === '/' ? '/index.html' : cleanUrl);
-  let ext = path.extname(file);
+  // Prende l'URL pulito senza eventuali parametri (es. ?v=1)
+  const cleanUrl = req.url.split('?');
+  const relativePath = cleanUrl === '/' ? 'index.html' : cleanUrl.replace(/^\/+/, '');
+  const filePath = path.join(__dirname, relativePath);
+  const ext = path.extname(filePath).toLowerCase();
 
-  fs.readFile(file, (err, data) => {
+  fs.readFile(filePath, (err, data) => {
     if (err) { 
-      res.writeHead(404); 
-      res.end('Not found'); 
+      res.writeHead(404, { 'Content-Type': 'text/plain' }); 
+      res.end('File non trovato: ' + relativePath); 
       return; 
     }
     res.writeHead(200, { 'Content-Type': mime[ext] || 'application/octet-stream' });
@@ -35,15 +42,18 @@ const giocatoriOnline = {};
 io.on('connection', (socket) => {
   console.log('Giocatore connesso:', socket.id);
 
+  // Riceve posizione, nome, livello e skin dal giocatore
   socket.on('aggiornaStato', (dati) => {
     giocatoriOnline[socket.id] = { id: socket.id, ...dati };
     io.emit('listaGiocatori', giocatoriOnline);
   });
 
+  // Riceve un messaggio in chat e lo inoltra a tutti
   socket.on('inviaMessaggioChat', (msgData) => {
     io.emit('nuovoMessaggioChat', msgData);
   });
 
+  // Quando un giocatore chiude il gioco
   socket.on('disconnect', () => {
     console.log('Giocatore uscito:', socket.id);
     delete giocatoriOnline[socket.id];
