@@ -1,0 +1,16 @@
+{
+  "dependencies": {
+    "socket.io": "^4.8.4",
+    "three": "^0.128.0"
+  },
+  "scripts": {
+    "start": "node server.js"
+  },
+  "name": "giocoforgia-25d",
+  "version": "1.0.0",
+  "main": "arsenale.js",
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": ""
+}

@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Forgia 2.5D - Succo Studios</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
+    body { overflow: hidden; background: #161c24; user-select: none; }
+    
+    #login-overlay {
+      position: fixed; inset: 0; background: rgba(10, 14, 22, 0.94); z-index: 200;
+      display: flex; align-items: center; justify-content: center; color: #fff;
+    }
+    #login-box {
+      background: #1e2736; border: 2px solid #ffd54f; padding: 24px 30px;
+      border-radius: 16px; text-align: center; box-shadow: 0 0 30px rgba(255,213,79,0.2);
+      max-width: 92vw;
+    }
+    #login-box input[type="text"] {
+      padding: 10px; font-size: 16px; border-radius: 8px; border: 1px solid #555;
+      background: #111; color: #fff; margin: 10px 0; width: 220px; text-align: center;
+    }
+    #login-box button#btn-gioca {
+      padding: 10px 26px; font-size: 16px; font-weight: bold; background: #ffd54f;
+      color: #111; border: none; border-radius: 8px; cursor: pointer;
+    }
+
+    #hud-effetti { position: fixed; top: 15px; right: 15px; display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px; z-index: 50; max-width: 65vw; }
+    .box {
+      background: rgba(15, 15, 25, 0.88); border: 2px solid #4fc3f7;
+      padding: 7px 11px; border-radius: 10px; color: #fff; font-size: 11px;
+    }
+    .box span { display: block; font-size: 13px; font-weight: bold; color: #4fc3f7; }
+    
+    #hud-zaino {
+      position: fixed; bottom: 15px; left: 15px; background: rgba(15, 15, 25, 0.88);
+      border: 2px solid #ffb74d; padding: 10px 14px; border-radius: 10px;
+      color: #fff; z-index: 50; min-width: 195px; font-size: 12px;
+    }
+    #hud-comandi {
+      position: fixed; bottom: 15px; right: 15px; background: rgba(15, 15, 25, 0.82);
+      padding: 9px 12px; border-radius: 10px; color: #ccc; font-size: 11px; z-index: 50; line-height: 1.5;
+    }
+    #toast {
+      position: fixed; top: 82px; left: 50%; transform: translateX(-50%);
+      background: rgba(15, 20, 30, 0.94); padding: 10px 20px; border-radius: 20px;
+      font-weight: bold; font-size: 14px; opacity: 0; transition: opacity 0.25s; pointer-events: none; z-index: 90;
+    }
+    #admin-banner {
+      position: fixed; top: 0; left: 0; width: 100%; background: linear-gradient(90deg, #ff6f00, #ffd54f, #ff6f00);
+      color: #111; text-align: center; font-weight: bold; padding: 6px; font-size: 14px;
+      transform: translateY(-100%); transition: transform 0.3s; z-index: 100;
+    }
+    #admin-banner.attivo { transform: translateY(0); }
+  </style>
+</head>
+<body>
+  <div id="login-overlay">
+    <div id="login-box">
+      <h1 style="color:#ffd54f;margin-bottom:4px;">⚒️ FORGIA 2.5D</h1>
+      <p style="color:#81d4fa;font-size:12px;letter-spacing:2px;margin-bottom:8px;">BY SUCCO STUDIOS</p>
+      <input type="text" id="input-nome" placeholder="Nome del Fabbro..." maxlength="15" /><br>
+      <button id="btn-gioca">Entra nel Mondo</button>
+    </div>
+  </div>
+
+  <div id="admin-banner">⚡ EVENTO SERVER: LUCK x3.0 ATTIVA! ⚡</div>
+  <div id="toast"></div>
+
+  <div id="hud-effetti">
+    <div class="box" style="border-color:#ffd54f;">💰 MONETE<span id="hud-monete" style="color:#ffd54f;">0</span></div>
+    <div class="box" style="border-color:#ff7043;">⚔️ ARMA<span id="hud-arma" style="color:#ffccbc;">Spada di Legno (8 ATK)</span></div>
+    <div class="box" style="border-color:#29b6f6;">🛡️ ARMATURA<span id="hud-armatura" style="color:#81d4fa;">Tunica Base (+0 DEF)</span></div>
+    <div class="box">🍀 LUCK<span id="luck-val">x1.0</span></div>
+  </div>
+
+  <div id="hud-zaino">
+    <strong style="color:#ffb74d;">🎒 Zaino di <span id="nome-zaino">Fabbro</span></strong>
+    <div style="margin:5px 0 8px 0;">
+      <div id="xp-testo" style="font-size:10px;color:#81d4fa;margin-bottom:2px;">LV.1 (0/120 XP)</div>
+      <div style="width:100%;height:6px;background:#263238;border-radius:4px;overflow:hidden;">
+        <div id="xp-barra" style="width:0%;height:100%;background:#29b6f6;"></div>
+      </div>
+    </div>
+    <div id="lista-minerali">Zaino vuoto. Vai in caverna!</div>
+  </div>
+
+  <div id="hud-comandi">
+    <b>WASD</b>: Muovi | <b>SHIFT</b>: Corri | <b>Q</b>: Scatto<br>
+    <b>1/2</b>: Piccone/Spada | <b>SPAZIO</b>: Usa<br>
+    <b>E</b>: Parla/Forgia | <b>I</b>: Arsenale | <b>INVIO</b>: Chat<br>
+    <b>M</b>: Musica | <b>B</b>: Backup | <b>N</b>: Editor
+  </div>
+
+  <script src="https://gstatic.com"></script>
+  <script src="https://gstatic.com"></script>
+  <script src="https://unpkg.com"></script>
+
+  <script src="node_modules/three/build/three.min.js"></script>
+  <script src="config.js"></script>
+  <script src="audio.js"></script>
+  <script src="editor.js"></script>
+  <script src="mappa.js"></script>
+  <script src="rocce.js"></script>
+  <script src="negozi.js"></script>
+  <script src="forgia.js"></script>
+  <script src="arsenale.js"></script>
+  <script src="mostri.js"></script>
+  <script src="socket.io/socket.io.js"></script>
+  <script src="multiplayer.js"></script>
+  <script src="mobile.js"></script>
+  <script src="game.js"></script>
+</body>
+</html>
