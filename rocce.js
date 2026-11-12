@@ -11,7 +11,16 @@ const TIPI_ROCCE = [
   { nome: "Monolite Mitico", hp: 12, sx: 1.50, sy: 2.50, sz: 1.50, col: 0x1a1a2e, cristallo: 0xff1744, forma: "obelisco", bonusDrop: 4 }
 ];
 
+const TIPI_ROCCE_GLACIALI = [
+  { nome: "Cumulo di Brina", hp: 45, sx: 1.1, sy: 0.9, sz: 1.1, col: 0x4fc3f7, cristallo: 0xe1f5fe, forma: "sfera", bonusDrop: 1 },
+  { nome: "Guglia Polare", hp: 90, sx: 1.0, sy: 2.2, sz: 1.0, col: 0x0288d1, cristallo: 0x00e5ff, forma: "cono", bonusDrop: 2 },
+  { nome: "Blocco Permafrost", hp: 160, sx: 1.5, sy: 1.4, sz: 1.5, col: 0x01579b, cristallo: 0x80deea, forma: "cubo", bonusDrop: 2 },
+  { nome: "Geode Boreale", hp: 260, sx: 1.6, sy: 1.4, sz: 1.6, col: 0x006064, cristallo: 0x64ffda, forma: "geode", bonusDrop: 3 },
+  { nome: "Obelisco Zero Assoluto", hp: 450, sx: 1.3, sy: 2.8, sz: 1.3, col: 0x1a237e, cristallo: 0x18ffff, forma: "obelisco", bonusDrop: 4 }
+];
+
 const PESI_FORME_ROCCE = new Array(22, 20, 14, 12, 10, 8, 6, 4, 3, 1);
+const PESI_ROCCE_GLACIALI = new Array(35, 28, 20, 12, 5);
 
 function creaGeometriaRoccia(forma) {
   if (forma === "cono") return new THREE.ConeGeometry(1.0, 1.9, 5);
@@ -23,20 +32,23 @@ function creaGeometriaRoccia(forma) {
   return new THREE.DodecahedronGeometry(1.15, 0);
 }
 
-function generaSingolaRoccia(scene, rocce, pos) {
+function generaSingolaRoccia(scene, rocce, pos, isGlaciale = false) {
+  const lista = isGlaciale ? TIPI_ROCCE_GLACIALI : TIPI_ROCCE;
+  const pesi = isGlaciale ? PESI_ROCCE_GLACIALI : PESI_FORME_ROCCE;
+
   let r = Math.random() * 100, idx = 0;
-  for (let i = 0; i < PESI_FORME_ROCCE.length; i++) {
-    if (r < PESI_FORME_ROCCE.at(i)) { idx = i; break; }
-    r -= PESI_FORME_ROCCE.at(i);
+  for (let i = 0; i < pesi.length; i++) {
+    if (r < pesi.at(i)) { idx = i; break; }
+    r -= pesi.at(i);
   }
-  const tipo = TIPI_ROCCE.at(idx);
+  const tipo = lista.at(idx);
 
   const gruppo = new THREE.Group();
   gruppo.position.set(pos.x, 0.8 * tipo.sy, pos.z);
 
   const mesh = new THREE.Mesh(
     creaGeometriaRoccia(tipo.forma),
-    new THREE.MeshStandardMaterial({ color: tipo.col, flatShading: true, roughness: 0.9 })
+    new THREE.MeshLambertMaterial({ color: tipo.col, flatShading: true })
   );
   mesh.scale.set(tipo.sx, tipo.sy, tipo.sz);
   mesh.rotation.y = Math.random() * Math.PI;
@@ -45,8 +57,8 @@ function generaSingolaRoccia(scene, rocce, pos) {
   const numCristalli = tipo.bonusDrop >= 2 ? 3 : 2;
   for (let c = 0; c < numCristalli; c++) {
     const cr = new THREE.Mesh(
-      new THREE.ConeGeometry(0.24 * tipo.sx, 0.75 * tipo.sy, 4),
-      new THREE.MeshStandardMaterial({ color: tipo.cristallo, emissive: tipo.cristallo, emissiveIntensity: 0.45 })
+      new THREE.ConeGeometry(0.24 * tipo.sx, 0.8 * tipo.sy, 4),
+      new THREE.MeshBasicMaterial({ color: tipo.cristallo })
     );
     const ang = (c / numCristalli) * Math.PI * 2 + 0.4;
     cr.position.set(Math.cos(ang) * 0.45 * tipo.sx, 0.45 * tipo.sy, Math.sin(ang) * 0.45 * tipo.sz);
@@ -60,6 +72,7 @@ function generaSingolaRoccia(scene, rocce, pos) {
     raggio: 1.25 * Math.max(tipo.sx, tipo.sz),
     hp: tipo.hp, maxHp: tipo.hp,
     tipoNome: tipo.nome, bonusDrop: tipo.bonusDrop,
+    isGlaciale: isGlaciale,
     attiva: true, minabile: true
   });
 }
