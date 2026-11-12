@@ -90,23 +90,19 @@ const SFX = {
   }
 };
 
-// VOCE 1: Flauto Principale (Melodia alta)
+// Melodie Medievali Villaggio (Scala Dorica Celtica)
 const V1_VILLAGGIO = [
   587.33, 0, 659.25, 698.46, 783.99, 0, 698.46, 659.25,
   587.33, 523.25, 587.33, 0, 659.25, 0, 587.33, 0,
   880.00, 0, 783.99, 698.46, 659.25, 0, 698.46, 783.99,
   659.25, 587.33, 523.25, 0, 587.33, 0, 587.33, 0
 ];
-
-// VOCE 2: Liuto in Controcanto (Risponde negli spazi vuoti con timbro diverso)
 const V2_VILLAGGIO = [
   0, 440.00, 0, 523.25, 0, 587.33, 523.25, 0,
   0, 392.00, 0, 440.00, 0, 493.88, 0, 440.00,
   0, 659.25, 0, 523.25, 0, 493.88, 523.25, 0,
   0, 440.00, 0, 392.00, 0, 329.63, 0, 440.00
 ];
-
-// VOCE 3: Bordone / Basso Grave (Fondamenta armonica)
 const V3_VILLAGGIO = [
   146.83, 0, 0, 220.00, 174.61, 0, 0, 220.00,
   146.83, 0, 130.81, 0, 164.81, 0, 146.83, 0,
@@ -114,23 +110,43 @@ const V3_VILLAGGIO = [
   146.83, 0, 164.81, 0, 130.81, 0, 146.83, 0
 ];
 
-// Tema Contrappuntistico Grotta (2 voci incrociate)
+// Tema Grotta Antica
 const V1_GROTTA = [293.66, 0, 349.23, 329.63, 293.66, 0, 261.63, 0, 293.66, 392.00, 349.23, 329.63, 261.63, 0, 220.00, 0];
 const V2_GROTTA = [0, 220.00, 0, 261.63, 0, 246.94, 0, 196.00, 0, 293.66, 0, 261.63, 0, 196.00, 0, 146.83];
 
+// Tema Abisso Glaciale (Cristalli e Carillon Polare)
+const V1_GLACIALE = [1046.50, 0, 1318.51, 0, 1174.66, 987.77, 1046.50, 0, 1567.98, 0, 1318.51, 0, 1174.66, 0, 987.77, 0];
+const V2_GLACIALE = [261.63, 0, 329.63, 0, 293.66, 0, 246.94, 0, 392.00, 0, 329.63, 0, 293.66, 0, 246.94, 0];
+
+// Tema Boss / Yeti Antico (Incalzante)
+const V1_BOSS = [220.00, 220.00, 261.63, 220.00, 293.66, 277.18, 261.63, 246.94, 220.00, 220.00, 329.63, 293.66, 261.63, 246.94, 196.00, 220.00];
+
 setInterval(() => {
   if (!musicaAttiva || audioCtx.state !== 'running') return;
-  const inGrotta = (typeof playerGroup !== 'undefined' && (playerGroup.position.z < -12 || playerGroup.position.x > 80));
+  const px = typeof playerGroup !== 'undefined' ? playerGroup.position.x : 0;
+  const pz = typeof playerGroup !== 'undefined' ? playerGroup.position.z : 0;
 
-  if (inGrotta) {
+  if (px > 80 || (px < -100 && pz < -95)) {
+    // Zona Boss Re Grotta o Boss Yeti Antico
+    const i = stepMusica % V1_BOSS.length;
+    suonaNota(V1_BOSS[i], 0.25, "sawtooth", 0.032);
+    suonaNota(V1_BOSS[i] / 2, 0.28, "triangle", 0.05);
+  } else if (px < -100) {
+    // Abisso Glaciale
+    const i = stepMusica % V1_GLACIALE.length;
+    suonaNota(V1_GLACIALE[i], 0.55, "sine", 0.035);
+    suonaNota(V2_GLACIALE[i], 0.65, "triangle", 0.04);
+  } else if (pz < -12) {
+    // Grotta Base
     const i = stepMusica % V1_GROTTA.length;
-    suonaNota(V1_GROTTA.at(i), 0.45, "triangle", 0.04);
-    suonaNota(V2_GROTTA.at(i), 0.50, "sine", 0.045);
+    suonaNota(V1_GROTTA[i], 0.45, "triangle", 0.04);
+    suonaNota(V2_GROTTA[i], 0.50, "sine", 0.045);
   } else {
+    // Villaggio Medievale
     const i = stepMusica % V1_VILLAGGIO.length;
-    suonaNota(V1_VILLAGGIO.at(i), 0.36, "sine", 0.042);
-    suonaNota(V2_VILLAGGIO.at(i), 0.26, "triangle", 0.048);
-    suonaNota(V3_VILLAGGIO.at(i), 0.55, "sawtooth", 0.018);
+    suonaNota(V1_VILLAGGIO[i], 0.36, "sine", 0.042);
+    suonaNota(V2_VILLAGGIO[i], 0.26, "triangle", 0.048);
+    suonaNota(V3_VILLAGGIO[i], 0.55, "sawtooth", 0.016);
   }
   stepMusica++;
 }, 290);
@@ -140,7 +156,7 @@ function toggleMusica() {
   const t = document.getElementById('toast');
   if (t) {
     t.innerText = musicaAttiva ? "🎵 Musica & Suoni: ON" : "🔇 Musica & Suoni: OFF";
-    t.style.border = "2px solid #81d4fa"; t.style.color = "#81d4fa"; t.style.opacity = 1;
+    t.style.border = "2px solid #d4af37"; t.style.color = "#ffd54f"; t.style.opacity = 1;
     setTimeout(() => t.style.opacity = 0, 1400);
   }
 }
