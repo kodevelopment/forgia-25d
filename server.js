@@ -3,65 +3,91 @@ const fs = require('fs');
 const path = require('path');
 const { Server } = require('socket.io');
 
-const mime = { 
-  '.html': 'text/html', 
-  '.js': 'application/javascript', 
-  '.css': 'text/css',
+const PORT = process.env.PORT || 8080;
+
+const MIME_TYPES = {
+  '.html': 'text/html; charset=utf-8',
+  '.css': 'text/css; charset=utf-8',
+  '.js': 'application/javascript; charset=utf-8',
+  '.json': 'application/json; charset=utf-8',
   '.png': 'image/png',
   '.jpg': 'image/jpeg',
-  '.jpeg': 'image/jpeg',
   '.gif': 'image/gif',
   '.svg': 'image/svg+xml',
-  '.json': 'application/json',
+  '.ico': 'image/x-icon',
   '.mp3': 'audio/mpeg',
-  '.wav': 'audio/wav',
-  '.ogg': 'audio/ogg'
+  '.ogg': 'audio/ogg',
+  '.wav': 'audio/wav'
 };
 
 const server = http.createServer((req, res) => {
-  // Prende l'URL pulito senza eventuali parametri (es. ?v=1)
-  const cleanUrl = req.url.split('?');
+  // Lascia gestire a Socket.IO tutte le sue richieste interne
+  if (req.url && req.url.startsWith('/socket.io')) return;
+
+  const rawUrl = typeof req.url === 'string' ? req.url : '/';
+  const cleanUrl = rawUrl.split('?') || '/';
   const relativePath = cleanUrl === '/' ? 'index.html' : cleanUrl.replace(/^\/+/, '');
   const filePath = path.join(__dirname, relativePath);
-  const ext = path.extname(filePath).toLowerCase();
 
-  fs.readFile(filePath, (err, data) => {
-    if (err) { 
-      res.writeHead(404, { 'Content-Type': 'text/plain' }); 
-      res.end('File non trovato: ' + relativePath); 
-      return; 
+  // Sicurezza: impedisce di uscire dalla cartella del gioco
+  if (!filePath.startsWith(__dirname)) {
+    res.writeHead(403);
+    res.end('Accesso negato');
+    return;
+  }
+
+  fs.readFile(filePath, (err, content) => {
+    if (err) {
+      res.writeHead(404, { 'Content-Type': 'text/plain; charset=utf-8' });
+      res.end('File non trovato: ' + relativePath);
+      return;
     }
-    res.writeHead(200, { 'Content-Type': mime[ext] || 'application/octet-stream' });
-    res.end(data);
+    const ext = path.extname(filePath).toLowerCase();
+    const contentType = MIME_TYPES[ext] || 'application/octet-stream';
+    res.writeHead(200, { 'Content-Type': contentType });
+    res.end(content);
   });
 });
 
-const io = new Server(server);
-const giocatoriOnline = {};
+const io = new Server(server, {
+  cors: { origin: '*' },
+  maxHttpBufferSize: 1e7 // 10MB per personaggi 80x80 e dati multiplayer
+});
+
+const giocatori = {};
 
 io.on('connection', (socket) => {
   console.log('Giocatore connesso:', socket.id);
 
-  // Riceve posizione, nome, livello e skin dal giocatore
-  socket.on('aggiornaStato', (dati) => {
-    giocatoriOnline[socket.id] = { id: socket.id, ...dati };
-    io.emit('listaGiocatori', giocatoriOnline);
+  socket.on('aggiornaGiocatore', (dati) => {
+    giocatori[socket.id] = { id: socket.id, ...dati };
+    socket.broadcast.emit('statoGiocatori', giocatori);
   });
 
-  // Riceve un messaggio in chat e lo inoltra a tutti
-  socket.on('inviaMessaggioChat', (msgData) => {
-    io.emit('nuovoMessaggioChat', msgData);
+  socket.on('messaggioChat', (msg) => {
+    io.emit('messaggioChat', msg);
   });
 
-  // Quando un giocatore chiude il gioco
+  // Segnalazione WebRTC per la chat vocale di prossimità
+  socket.on('webrtc-offer', (data) => {
+    if (data && data.to) io.to(data.to).emit('webrtc-offer', { from: socket.id, offer: data.offer });
+  });
+
+  socket.on('webrtc-answer', (data) => {
+    if (data && data.to) io.to(data.to).emit('webrtc-answer', { from: socket.id, answer: data.answer });
+  });
+
+  socket.on('webrtc-ice', (data) => {
+    if (data && data.to) io.to(data.to).emit('webrtc-ice', { from: socket.id, candidate: data.candidate });
+  });
+
   socket.on('disconnect', () => {
     console.log('Giocatore uscito:', socket.id);
-    delete giocatoriOnline[socket.id];
-    io.emit('listaGiocatori', giocatoriOnline);
+    delete giocatori[socket.id];
+    io.emit('giocatoreDisconnesso', socket.id);
   });
 });
 
-const PORT = process.env.PORT || 8080;
 server.listen(PORT, '0.0.0.0', () => {
   console.log(`SERVER ATTIVO SU http://localhost:${PORT}`);
 });
