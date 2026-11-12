@@ -1,10 +1,25 @@
 const MINERALI = [
-  { nome: "Pietra Focaia", rarita: "Comune", peso: 60, danno: 2, difesa: 1, hpBonus: 5, colore: 0xffffff, hex: "#ffffff" },
-  { nome: "Verdite", rarita: "Non Comune", peso: 28, danno: 5, difesa: 2, hpBonus: 15, colore: 0x4caf50, hex: "#4caf50" },
-  { nome: "Cielite", rarita: "Raro", peso: 10, danno: 11, difesa: 5, hpBonus: 35, colore: 0x29b6f6, hex: "#29b6f6" },
-  { nome: "Voidstone", rarita: "Epico", peso: 2, danno: 22, difesa: 10, hpBonus: 70, colore: 0xab47bc, hex: "#ab47bc" },
-  { nome: "Solarium", rarita: "Leggendario", peso: 0.2, danno: 45, difesa: 20, hpBonus: 140, colore: 0xffd54f, hex: "#ffd54f" },
-  { nome: "Kitsunite", rarita: "MITICO", peso: 0.05, danno: 95, difesa: 40, hpBonus: 300, colore: 0xff1744, hex: "#ff1744" }
+  // Minerali Caverna Base
+  { nome: "Pietra Focaia", rarita: "Comune", peso: 60, danno: 2, difesa: 1, hpBonus: 5, xp: 8, colore: 0xffffff, hex: "#ffffff" },
+  { nome: "Verdite", rarita: "Non Comune", peso: 28, danno: 5, difesa: 2, hpBonus: 15, xp: 14, colore: 0x4caf50, hex: "#4caf50" },
+  { nome: "Cielite", rarita: "Raro", peso: 10, danno: 11, difesa: 5, hpBonus: 35, xp: 24, colore: 0x29b6f6, hex: "#29b6f6" },
+  { nome: "Voidstone", rarita: "Epico", peso: 2, danno: 22, difesa: 10, hpBonus: 70, xp: 45, colore: 0xab47bc, hex: "#ab47bc" },
+  { nome: "Solarium", rarita: "Leggendario", peso: 0.2, danno: 45, difesa: 20, hpBonus: 140, xp: 90, colore: 0xffd54f, hex: "#ffd54f" },
+  { nome: "Kitsunite", rarita: "MITICO", peso: 0.05, danno: 95, difesa: 40, hpBonus: 300, xp: 200, colore: 0xff1744, hex: "#ff1744" },
+
+  // 12 Nuovi Minerali della Caverna Glaciale
+  { nome: "Brina Compatta", rarita: "Glaciale Comune", peso: 45, danno: 14, difesa: 7, hpBonus: 45, xp: 28, colore: 0xb3e5fc, hex: "#b3e5fc", glaciale: true },
+  { nome: "Quarzo Artico", rarita: "Glaciale Comune", peso: 32, danno: 20, difesa: 10, hpBonus: 65, xp: 36, colore: 0xe1f5fe, hex: "#e1f5fe", glaciale: true },
+  { nome: "Criolite", rarita: "Glaciale Non Comune", peso: 22, danno: 28, difesa: 14, hpBonus: 95, xp: 48, colore: 0x4fc3f7, hex: "#4fc3f7", glaciale: true },
+  { nome: "Zaffiro Boreale", rarita: "Glaciale Non Comune", peso: 16, danno: 38, difesa: 18, hpBonus: 130, xp: 62, colore: 0x0288d1, hex: "#0288d1", glaciale: true },
+  { nome: "Permafrost", rarita: "Glaciale Raro", peso: 11, danno: 50, difesa: 24, hpBonus: 175, xp: 80, colore: 0x00bcd4, hex: "#00bcd4", glaciale: true },
+  { nome: "Ghiaccio Eterno", rarita: "Glaciale Raro", peso: 7.5, danno: 65, difesa: 31, hpBonus: 230, xp: 105, colore: 0x80deea, hex: "#80deea", glaciale: true },
+  { nome: "Cristallo Polare", rarita: "Glaciale Epico", peso: 4.5, danno: 85, difesa: 40, hpBonus: 300, xp: 140, colore: 0x00e5ff, hex: "#00e5ff", glaciale: true },
+  { nome: "Argento Lunare", rarita: "Glaciale Epico", peso: 2.8, danno: 110, difesa: 52, hpBonus: 390, xp: 185, colore: 0xcfd8dc, hex: "#cfd8dc", glaciale: true },
+  { nome: "Nordite", rarita: "Glaciale Leggendario", peso: 1.4, danno: 145, difesa: 68, hpBonus: 510, xp: 240, colore: 0x64ffda, hex: "#64ffda", glaciale: true },
+  { nome: "Aurora Cristallina", rarita: "Glaciale Leggendario", peso: 0.6, danno: 190, difesa: 88, hpBonus: 680, xp: 320, colore: 0x1de9b6, hex: "#1de9b6", glaciale: true },
+  { nome: "Cuore dello Yeti", rarita: "GLACIALE MITICO", peso: 0.18, danno: 250, difesa: 115, hpBonus: 900, xp: 450, colore: 0x18ffff, hex: "#18ffff", glaciale: true },
+  { nome: "Zero Assoluto", rarita: "DIVINO GLACIALE", peso: 0.05, danno: 340, difesa: 155, hpBonus: 1250, xp: 650, colore: 0x84ffff, hex: "#84ffff", glaciale: true }
 ];
 
 const SAVE_KEY = "forgia_25d_save_v1";
@@ -15,16 +30,16 @@ let datiUtente = JSON.parse(localStorage.getItem(SAVE_KEY)) || {
   inventario: {},
   monete: 0,
   livelloPiccone: 0,
+  checkpointGlaciale: false,
   armaEquipaggiata: { nome: "Spada di Legno", danno: 8, qualita: "Base", hex: "#a1887f" },
   armaturaEquipaggiata: { nome: "Tunica Base", difesa: 0, hpBonus: 0, qualita: "Base", hex: "#1976d2" }
 };
 
-// Assicura che anche i vecchi salvataggi abbiano livello e xp
 if (!datiUtente.livello) datiUtente.livello = 1;
 if (typeof datiUtente.xp !== 'number') datiUtente.xp = 0;
 
 function getXpNecessaria(livello) {
-  return livello * 120;
+  return Math.round(livello * 120 + Math.pow(livello, 1.35) * 25);
 }
 
 function aggiungiXP(quantita) {
@@ -41,9 +56,9 @@ function aggiungiXP(quantita) {
     if (typeof SFX !== 'undefined' && SFX.forgia) SFX.forgia();
     const t = document.getElementById('toast');
     if (t) {
-      t.innerText = `🎉 LEVEL UP! Ora sei Livello ${datiUtente.livello}! (+2 ATK)`;
-      t.style.border = "2px solid #29b6f6";
-      t.style.color = "#81d4fa";
+      t.innerText = `🎉 LEVEL UP! Ora sei Livello ${datiUtente.livello}! (+3 ATK, +12 HP)`;
+      t.style.border = "2px solid #ffd54f";
+      t.style.color = "#ffd54f";
       t.style.opacity = 1;
       setTimeout(() => t.style.opacity = 0, 3000);
     }
@@ -61,7 +76,6 @@ function aggiornaHUDCompleto() {
   const moneteEl = document.getElementById('hud-monete');
   if (moneteEl) moneteEl.innerText = datiUtente.monete || 0;
 
-  // Aggiorna barra e testo XP
   const lv = datiUtente.livello || 1;
   const xpAtt = datiUtente.xp || 0;
   const xpMax = getXpNecessaria(lv);
@@ -83,8 +97,9 @@ function aggiornaHUDCompleto() {
   }
 
   if (typeof maxHpGiocatore !== 'undefined') {
-    const bonus = datiUtente.armaturaEquipaggiata ? (datiUtente.armaturaEquipaggiata.hpBonus || 0) : 0;
-    maxHpGiocatore = 100 + bonus;
+    const bonusArm = datiUtente.armaturaEquipaggiata ? (datiUtente.armaturaEquipaggiata.hpBonus || 0) : 0;
+    const bonusLv = (lv - 1) * 12;
+    maxHpGiocatore = 100 + bonusArm + bonusLv;
     if (hpGiocatore > maxHpGiocatore) hpGiocatore = maxHpGiocatore;
     if (typeof aggiornaBarraHP === 'function') aggiornaBarraHP();
   }
