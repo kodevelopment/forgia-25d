@@ -21,15 +21,13 @@ const MIME_TYPES = {
 };
 
 const server = http.createServer((req, res) => {
-  // Lascia gestire a Socket.IO tutte le sue richieste interne
   if (req.url && req.url.startsWith('/socket.io')) return;
 
   const rawUrl = typeof req.url === 'string' ? req.url : '/';
-  const cleanUrl = rawUrl.split('?') || '/';
+  const cleanUrl = rawUrl.split('?').at(0) || '/';
   const relativePath = cleanUrl === '/' ? 'index.html' : cleanUrl.replace(/^\/+/, '');
   const filePath = path.join(__dirname, relativePath);
 
-  // Sicurezza: impedisce di uscire dalla cartella del gioco
   if (!filePath.startsWith(__dirname)) {
     res.writeHead(403);
     res.end('Accesso negato');
@@ -51,7 +49,7 @@ const server = http.createServer((req, res) => {
 
 const io = new Server(server, {
   cors: { origin: '*' },
-  maxHttpBufferSize: 1e7 // 10MB per personaggi 80x80 e dati multiplayer
+  maxHttpBufferSize: 1e7
 });
 
 const giocatori = {};
@@ -68,7 +66,6 @@ io.on('connection', (socket) => {
     io.emit('messaggioChat', msg);
   });
 
-  // Segnalazione WebRTC per la chat vocale di prossimità
   socket.on('webrtc-offer', (data) => {
     if (data && data.to) io.to(data.to).emit('webrtc-offer', { from: socket.id, offer: data.offer });
   });
