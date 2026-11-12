@@ -21,46 +21,113 @@ if (!datiUtente.pixelEroe) {
 
 function generaCanvasPersonaggio(matrice, armatura) {
   const c = document.createElement('canvas');
-  c.width = 16; c.height = 16;
+  c.width = 80;
+  c.height = 80;
   const g = c.getContext('2d');
+  g.imageSmoothingEnabled = false;
 
+  const hasArmatura = armatura && armatura.hpBonus > 0;
+  const colBase = hasArmatura ? (armatura.hex || "#90a4ae") : "#90a4ae";
+  const isElmo = hasArmatura && (armatura.nome || "").toLowerCase().includes("elmo");
+
+  // 0. MANTELLO DIETRO LE SPALLE (se indossi una corazza)
+  if (hasArmatura && !isElmo) {
+    g.fillStyle = "#111827";
+    g.fillRect(10, 40, 60, 36);
+    g.fillStyle = colBase;
+    g.globalAlpha = 0.55;
+    g.fillRect(12, 42, 56, 32);
+    g.globalAlpha = 1.0;
+    // Bordo dorato in fondo al mantello
+    g.fillStyle = "#ffd54f";
+    g.fillRect(12, 72, 56, 3);
+  }
+
+  // 1. Disegna il personaggio base 16x16 scalato x5
   for (let y = 0; y < 16; y++) {
     for (let x = 0; x < 16; x++) {
       if (matrice[y][x]) {
         g.fillStyle = matrice[y][x];
-        g.fillRect(x, y, 1, 1);
+        g.fillRect(x * 5, y * 5, 5, 5);
       }
     }
   }
 
-  if (armatura && armatura.hpBonus > 0) {
-    g.fillStyle = "#ffd54f";
-    g.fillRect(6, 0, 4, 1);
-    g.fillStyle = armatura.hex;
-    g.fillRect(3, 1, 10, 4);
-    g.fillRect(3, 5, 2, 3);
-    g.fillRect(11, 5, 2, 3);
-    g.fillStyle = "rgba(0,0,0,0.45)";
-    g.fillRect(5, 4, 6, 1);
+  // 2. Disegna l'armatura HD 80x80 sopra al personaggio
+  if (hasArmatura) {
+    const pezzoHD = (x, y, w, h, fill, bordo = "#090d16") => {
+      g.fillStyle = bordo;
+      g.fillRect(x - 1, y - 1, w + 2, h + 2);
+      g.fillStyle = fill;
+      g.fillRect(x, y, w, h);
+    };
 
-    g.fillStyle = armatura.hex;
-    g.fillRect(1, 8, 3, 4);
-    g.fillRect(12, 8, 3, 4);
-    g.fillRect(3, 8, 10, 6);
+    // ELMO HD CON CORNA / CRESTA REALI
+    if (isElmo || armatura.difesa >= 12) {
+      // Corna laterali epiche per armature rare/epiche
+      if (armatura.difesa >= 20) {
+        pezzoHD(7, 4, 8, 12, "#ffd54f");
+        pezzoHD(5, 1, 5, 6, "#ffffff");
+        pezzoHD(65, 4, 8, 12, "#ffd54f");
+        pezzoHD(70, 1, 5, 6, "#ffffff");
+      }
+      // Cresta centrale
+      pezzoHD(33, 1, 14, 5, "#ffd54f");
+      pezzoHD(37, 0, 6, 3, "#ffffff");
+      // Calotta elmo
+      pezzoHD(17, 6, 46, 15, colBase);
+      pezzoHD(15, 20, 9, 17, colBase);
+      pezzoHD(56, 20, 9, 17, colBase);
+      // Ombre, riflessi e gemma frontale
+      g.fillStyle = "rgba(0,0,0,0.5)";
+      g.fillRect(20, 18, 40, 4);
+      g.fillStyle = "rgba(255,255,255,0.5)";
+      g.fillRect(21, 8, 16, 4);
+      pezzoHD(36, 10, 8, 8, "#00e5ff", "#000");
+    }
 
-    g.fillStyle = "rgba(255,255,255,0.35)";
-    g.fillRect(4, 9, 3, 2);
-    g.fillStyle = "rgba(0,0,0,0.3)";
-    g.fillRect(4, 11, 8, 2);
+    // CORAZZA COMPLETA HD
+    if (!isElmo) {
+      // Spalline scolpite a doppio strato
+      pezzoHD(3, 37, 15, 19, colBase);
+      pezzoHD(5, 34, 11, 5, "#ffd54f");
+      g.fillStyle = "rgba(255,255,255,0.45)";
+      g.fillRect(6, 39, 5, 11);
 
-    g.fillStyle = "#ffd54f";
-    g.fillRect(3, 13, 10, 1);
-    g.fillStyle = "#ffffff";
-    g.fillRect(7, 13, 2, 1);
+      pezzoHD(62, 37, 15, 19, colBase);
+      pezzoHD(64, 34, 11, 5, "#ffd54f");
+      g.fillStyle = "rgba(255,255,255,0.45)";
+      g.fillRect(65, 39, 5, 11);
 
-    g.fillStyle = armatura.hex;
-    g.fillRect(4, 14, 3, 2);
-    g.fillRect(9, 14, 3, 2);
+      // Pettorale centrale con bordi dorati
+      pezzoHD(16, 42, 48, 25, colBase);
+      g.fillStyle = "#ffd54f";
+      g.fillRect(16, 42, 48, 2);
+
+      // Piastre e riflessi
+      g.fillStyle = "rgba(255,255,255,0.4)";
+      g.fillRect(19, 45, 16, 8);
+      g.fillRect(45, 45, 16, 8);
+      g.fillStyle = "rgba(0,0,0,0.35)";
+      g.fillRect(18, 56, 44, 7);
+
+      // Nucleo runico luminoso al centro del petto
+      pezzoHD(34, 46, 12, 12, "#ffd54f", "#000");
+      g.fillStyle = "#00e5ff";
+      g.fillRect(36, 48, 8, 8);
+      g.fillStyle = "#ffffff";
+      g.fillRect(38, 50, 4, 4);
+
+      // Cintura e stivali
+      pezzoHD(15, 64, 50, 5, "#3e2723");
+      pezzoHD(34, 63, 12, 7, "#ffd54f");
+
+      pezzoHD(19, 70, 16, 9, colBase);
+      pezzoHD(45, 70, 16, 9, colBase);
+      g.fillStyle = "#ffd54f";
+      g.fillRect(20, 70, 14, 2);
+      g.fillRect(46, 70, 14, 2);
+    }
   }
   return c;
 }
